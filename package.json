@@ -1,0 +1,23 @@
+{
+  "name": "@asoc/sdk",
+  "version": "0.1.0",
+  "description": "The official A-SOC SDK for agent trust and audit tickets",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "node --test",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "jsonwebtoken": "^9.0.2",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  }
+}
