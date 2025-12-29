@@ -1,10 +1,32 @@
 {
   "name": "@asoc/sdk",
   "version": "0.1.0",
-  "description": "The official A-SOC SDK for agent trust and audit tickets",
+  "description": "JWT-based audit ticket generation and validation for A-SOC trust verification",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "keywords": [
+    "asoc",
+    "agent",
+    "trust",
+    "audit",
+    "x402",
+    "jwt",
+    "verification",
+    "security",
+    "ai-agents"
+  ],
+  "author": "A-SOC Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/asoc-trust/asoc-core.git",
+    "directory": "packages/sdk"
+  },
+  "bugs": {
+    "url": "https://github.com/asoc-trust/asoc-core/issues"
+  },
+  "homepage": "https://github.com/asoc-trust/asoc-core/tree/main/packages/sdk#readme",
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",

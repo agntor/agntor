@@ -1,17 +1,17 @@
-# @asoc/ticket-issuer
+# @asoc-trust/sdk
 
 JWT-based audit ticket generation and validation for A-SOC trust verification.
 
 ## Installation
 
 ```bash
-npm install @asoc/ticket-issuer
+npm install @asoc-trust/sdk
 ```
 
 ## Quick Start
 
 ```typescript
-import { TicketIssuer } from '@asoc/ticket-issuer';
+import { TicketIssuer } from '@asoc/sdk';
 
 // Initialize issuer with your secret
 const issuer = new TicketIssuer({
