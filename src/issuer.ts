@@ -4,10 +4,11 @@ import {
   TicketGenerationOptions,
   TicketIssuerConfig,
   ValidationResult,
+  X402PaymentProof,
 } from './types.js';
 
 /**
- * A-SOC Ticket Issuer
+ * Agntor Ticket Issuer
  * 
  * Generates and validates cryptographic audit tickets for agent trust verification.
  * Supports sub-second validation for real-time agent-to-agent transactions.
@@ -28,11 +29,16 @@ export class TicketIssuer {
    * Generate a new audit ticket for an agent
    * 
    * @param options - Ticket generation options
-   * @returns JWT token string (X-ASOC-Proof header value)
+  * @returns JWT token string (X-AGNTOR-Proof header value)
    */
   generateTicket(options: TicketGenerationOptions): string {
     const now = Math.floor(Date.now() / 1000);
     const validityDuration = options.validityDuration ?? this.config.defaultValidity;
+
+    const constraints = {
+      ...options.constraints,
+      requires_x402_payment: options.constraints.requires_x402_payment ?? true,
+    };
 
     const payload: AuditTicketPayload = {
       iss: this.config.issuer,
@@ -40,7 +46,7 @@ export class TicketIssuer {
       iat: now,
       exp: now + validityDuration,
       audit_level: options.auditLevel,
-      constraints: options.constraints,
+      constraints,
       metadata: options.metadata,
     };
 
@@ -160,7 +166,8 @@ export class TicketIssuer {
   async validateTransaction(
     token: string,
     transactionValue: number,
-    mcpServer?: string
+    mcpServer?: string,
+    paymentContext?: { protocol?: string; x402Proof?: X402PaymentProof }
   ): Promise<ValidationResult> {
     const result = await this.validateTicket(token);
 
@@ -186,6 +193,27 @@ export class TicketIssuer {
         errorCode: 'CONSTRAINT_VIOLATION',
         payload: result.payload,
       };
+    }
+
+    // Enforce x402-only criteria if required
+    if (result.payload.constraints.requires_x402_payment) {
+      if (paymentContext?.protocol !== 'x402') {
+        return {
+          valid: false,
+          error: 'x402 payment protocol required',
+          errorCode: 'CONSTRAINT_VIOLATION',
+          payload: result.payload,
+        };
+      }
+
+      if (!paymentContext.x402Proof?.txHash) {
+        return {
+          valid: false,
+          error: 'Missing x402 payment proof',
+          errorCode: 'CONSTRAINT_VIOLATION',
+          payload: result.payload,
+        };
+      }
     }
 
     return result;

@@ -24,14 +24,27 @@ export const AuditConstraints = z.object({
   
   /** Geographic restrictions (optional) */
   geo_restrictions: z.array(z.string()).optional(),
+
+  /** Require x402 payment proof for transactions */
+  requires_x402_payment: z.boolean().optional(),
 });
 export type AuditConstraints = z.infer<typeof AuditConstraints>;
+
+/**
+ * x402 proof of payment payload (minimal)
+ */
+export interface X402PaymentProof {
+  fromAddress?: string;
+  toAddress?: string;
+  chainId?: string;
+  txHash?: string;
+}
 
 /**
  * The complete audit ticket payload
  */
 export const AuditTicketPayload = z.object({
-  /** Issuer (A-SOC authority) */
+  /** Issuer (Agntor authority) */
   iss: z.string(),
   
   /** Subject (Agent ID) */
@@ -104,9 +117,38 @@ export interface TicketIssuerConfig {
   /** Signing algorithm (default: HS256) */
   algorithm?: 'HS256' | 'HS384' | 'HS512' | 'RS256' | 'RS384' | 'RS512';
   
-  /** Issuer identifier (your A-SOC authority domain) */
+  /** Issuer identifier (your Agntor authority domain) */
   issuer: string;
   
   /** Default ticket validity in seconds (default: 300) */
   defaultValidity?: number;
+}
+
+/**
+ * Guard/Redact/Tool policies
+ */
+export interface Policy {
+  injectionPatterns?: Array<RegExp | string>;
+  redactionPatterns?: Array<{ type: string; pattern: RegExp | string; replacement?: string }>;
+  toolBlocklist?: string[];
+  toolAllowlist?: string[];
+  cweMap?: Record<string, string>;
+}
+
+export interface GuardResult {
+  classification: 'pass' | 'block';
+  violation_types: string[];
+  cwe_codes: string[];
+  usage?: { promptTokens: number; completionTokens: number; totalTokens: number };
+}
+
+export interface RedactResult {
+  redacted: string;
+  findings: Array<{ type: string; span: [number, number]; value?: string }>;
+}
+
+export interface ToolGuardResult {
+  allowed: boolean;
+  violations?: string[];
+  reason?: string;
 }

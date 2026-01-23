@@ -1,13 +1,13 @@
-# Contributing to @asoc/sdk
+# Contributing to @agntor/sdk
 
-Thank you for your interest in contributing to the A-SOC SDK!
+Thank you for your interest in contributing to the Agntor SDK!
 
 ## Development Setup
 
 ```bash
 # Clone the repository
-git clone https://github.com/asoc-trust/asoc-core.git
-cd asoc-core/packages/sdk
+git clone https://github.com/agntor-protocol/sdk.git
+cd sdk
 
 # Install dependencies
 npm install
@@ -55,11 +55,11 @@ npm run dev
 
 ## Architecture Notes
 
-The SDK is the **core primitive** of A-SOC:
+The SDK is the **core primitive** of Agntor:
 - `issuer.ts`: Ticket generation and validation logic
 - `types.ts`: All TypeScript interfaces
 - Zero runtime dependencies to keep bundle size minimal
 
 ## Questions?
 
-Open an issue or reach out at https://github.com/asoc-trust/asoc-core/discussions
+Open an issue or reach out at https://github.com/agntor-protocol/sdk/issues

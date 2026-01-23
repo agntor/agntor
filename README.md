@@ -1,22 +1,22 @@
-# @asoc-trust/sdk
+# @agntor/sdk
 
-JWT-based audit ticket generation and validation for A-SOC trust verification.
+JWT-based audit ticket generation and validation for Agntor trust verification.
 
 ## Installation
 
 ```bash
-npm install @asoc-trust/sdk
+npm install @agntor/sdk
 ```
 
 ## Quick Start
 
 ```typescript
-import { TicketIssuer } from '@asoc/sdk';
+import { TicketIssuer } from '@agntor/sdk';
 
 // Initialize issuer with your secret
 const issuer = new TicketIssuer({
-  signingKey: process.env.ASOC_SECRET_KEY!,
-  issuer: 'asoc-authority.com',
+  signingKey: process.env.AGNTOR_SECRET_KEY!,
+  issuer: 'agntor.com',
   algorithm: 'HS256',
   defaultValidity: 300, // 5 minutes
 });
@@ -29,6 +29,7 @@ const ticket = issuer.generateTicket({
     max_op_value: 50.0,
     allowed_mcp_servers: ['finance-node', 'legal-node'],
     kill_switch_active: false,
+    requires_x402_payment: true,
   },
 });
 
@@ -39,13 +40,32 @@ if (result.valid) {
 }
 
 // Validate with transaction constraints
-const txResult = await issuer.validateTransaction(ticket, 25.0, 'finance-node');
+const txResult = await issuer.validateTransaction(ticket, 25.0, 'finance-node', {
+  protocol: 'x402',
+  x402Proof: { txHash: '0xabc123', chainId: '1' },
+});
 if (!txResult.valid) {
   console.error('Transaction blocked:', txResult.error);
 }
 ```
 
 ## API Reference
+
+## Protections
+
+```typescript
+import { guard, redact, guardTool } from '@agntor/sdk';
+
+const policy = {
+  injectionPatterns: [/ignore previous instructions/i],
+  redactionPatterns: [{ type: 'pii', pattern: /\b\d{3}-\d{2}-\d{4}\b/g }],
+  toolBlocklist: ['shell.exec'],
+};
+
+const guardResult = await guard('input text', policy);
+const redaction = redact('ssn 123-45-6789', policy);
+const toolDecision = guardTool('shell.exec', policy);
+```
 
 ### `TicketIssuer`
 
@@ -57,7 +77,7 @@ new TicketIssuer(config: TicketIssuerConfig)
 
 **Config Options:**
 - `signingKey`: Secret key for HMAC or private key for RSA
-- `issuer`: Your A-SOC authority identifier
+- `issuer`: Your Agntor authority identifier
 - `algorithm`: JWT algorithm (default: 'HS256')
 - `defaultValidity`: Default ticket lifetime in seconds (default: 300)
 - `publicKey`: Public key for RSA verification (optional)
@@ -76,7 +96,7 @@ Validates ticket signature, expiry, and kill switch status.
 
 Synchronous validation for performance-critical paths.
 
-**`validateTransaction(token: string, value: number, server?: string): Promise<ValidationResult>`**
+**`validateTransaction(token: string, value: number, server?: string, paymentContext?: { protocol?: string; x402Proof?: X402PaymentProof }): Promise<ValidationResult>`**
 
 Validates ticket AND enforces transaction constraints.
 
@@ -88,7 +108,7 @@ Decodes ticket without validation (debugging only).
 
 ```typescript
 {
-  iss: "asoc-authority.com",       // Issuer
+  iss: "agntor.com",       // Issuer
   sub: "agent-id-12345",            // Agent ID
   iat: 1734567890,                  // Issued at (Unix)
   exp: 1734568190,                  // Expires at (Unix)

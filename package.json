@@ -1,12 +1,12 @@
 {
-  "name": "@asoc/sdk",
+  "name": "@agntor/sdk",
   "version": "0.1.0",
-  "description": "JWT-based audit ticket generation and validation for A-SOC trust verification",
+  "description": "JWT-based audit ticket generation and validation for Agntor trust verification",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "keywords": [
-    "asoc",
+    "agntor",
     "agent",
     "trust",
     "audit",
@@ -16,17 +16,16 @@
     "security",
     "ai-agents"
   ],
-  "author": "A-SOC Team",
+  "author": "Agntor Team",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/asoc-trust/asoc-core.git",
-    "directory": "packages/sdk"
+    "url": "https://github.com/agntor-protocol/sdk.git"
   },
   "bugs": {
-    "url": "https://github.com/asoc-trust/asoc-core/issues"
+    "url": "https://github.com/agntor-protocol/sdk/issues"
   },
-  "homepage": "https://github.com/asoc-trust/asoc-core/tree/main/packages/sdk#readme",
+  "homepage": "https://github.com/agntor-protocol/sdk#readme",
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
