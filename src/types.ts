@@ -133,6 +133,11 @@ export interface Policy {
   toolBlocklist?: string[];
   toolAllowlist?: string[];
   cweMap?: Record<string, string>;
+  /**
+   * More granular tool policies based on tool name and arguments.
+   * Returns true to allow, false or string (reason) to deny.
+   */
+  toolValidator?: (tool: string, args?: any) => boolean | string;
 }
 
 export interface GuardResult {
