@@ -18,6 +18,10 @@ export const DEFAULT_REDACTION_PATTERNS = [
   { type: 'api_key', pattern: /\b(api_key|secret|password|token)\s*[:=]\s*["']?[a-zA-Z0-9\-_]{20,}["']?/gi, replacement: '$1: [REDACTED]' },
   // Bearer Token
   { type: 'bearer_token', pattern: /bearer\s+[a-zA-Z0-9._\-\/+=]{20,}/gi, replacement: 'Bearer [REDACTED]' },
+  // Phone Numbers
+  { type: 'phone_number', pattern: /\b(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g, replacement: '[PHONE]' },
+  // Street Addresses (Common US/UK formats)
+  { type: 'street_address', pattern: /\b\d{1,5}\s(?:[A-Z]{1}[a-z]+(?:\s[A-Z]{1}[a-z]+)*)\s(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Way|Court|Ct)\b/g, replacement: '[ADDRESS]' },
 ];
 
 export function redact(input: string, policy: Policy): RedactResult {
