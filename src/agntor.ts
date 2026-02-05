@@ -49,6 +49,22 @@ export class Agntor {
       return data.trust?.score;
   }
 
+  async activateKillSwitch(agentId: string, reason: string) {
+      const res = await this.request('/api/v1/agents/kill-switch', {
+          method: 'POST',
+          body: JSON.stringify({ agentId, reason })
+      });
+      return res.json();
+  }
+
+  async queryAgents(params: any) {
+      const res = await this.request('/api/v1/agents', {
+          method: 'POST', // using POST for complex query body
+          body: JSON.stringify(params)
+      });
+      return res.json();
+  }
+
   async escrow(params: { target: string; amount: number; task: string; agentId?: string }) {
       const res = await this.request('/api/escrow/create', {
           method: 'POST',
