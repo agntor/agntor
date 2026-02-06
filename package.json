@@ -1,36 +1,55 @@
 {
   "name": "@agntor/sdk",
   "version": "0.1.0",
-  "description": "JWT-based audit ticket generation and validation for Agntor trust verification",
+  "description": "Trust and payment rail for AI agents — identity, verification, escrow, settlement, and reputation.",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
   "keywords": [
     "agntor",
     "agent",
     "trust",
-    "audit",
-    "x402",
-    "jwt",
+    "escrow",
+    "settlement",
+    "reputation",
     "verification",
-    "security",
-    "ai-agents"
+    "identity",
+    "ai-agents",
+    "x402",
+    "jwt"
   ],
   "author": "Agntor Team",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/agntor-protocol/sdk.git"
+    "url": "https://github.com/Garinmckayl/agntor.git",
+    "directory": "packages/sdk"
   },
   "bugs": {
-    "url": "https://github.com/agntor-protocol/sdk/issues"
+    "url": "https://github.com/Garinmckayl/agntor/issues"
   },
-  "homepage": "https://github.com/agntor-protocol/sdk#readme",
+  "homepage": "https://agntor.com",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
     "test": "node --test",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "jsonwebtoken": "^9.0.2",
