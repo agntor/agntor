@@ -75,8 +75,8 @@ async function isPrivateIp(hostname: string): Promise<boolean> {
   }
 
   try {
-    const result = await lookup(cleanHostname, { all: false });
-    return isPrivateIpAddress(result.address);
+    const results = await lookup(cleanHostname, { all: true });
+    return results.some((r) => isPrivateIpAddress(r.address));
   } catch {
     // DNS resolution failed — treat as private (fail-safe)
     return true;

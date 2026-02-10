@@ -62,20 +62,15 @@ export class TransactionSimulator {
    * Simulate a transaction using `eth_call` and `eth_estimateGas`.
    */
   async simulate(params: SimulationParams): Promise<SimulationResult> {
-    const txObject: Record<string, string | undefined> = {
-      from: params.from,
-      to: params.to,
-      data: params.data,
-      value: params.value,
-      gas: params.gas,
-    };
-
-    // Remove undefined values
-    for (const key of Object.keys(txObject)) {
-      if (txObject[key] === undefined) {
-        delete txObject[key];
-      }
-    }
+    const txObject = Object.fromEntries(
+      Object.entries({
+        from: params.from,
+        to: params.to,
+        data: params.data,
+        value: params.value,
+        gas: params.gas,
+      }).filter(([, v]) => v !== undefined),
+    );
 
     try {
       // 1. eth_call — detect reverts

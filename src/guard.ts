@@ -54,8 +54,9 @@ export async function guard(
         violations.push('llm-flagged-injection');
       }
     } catch {
-      // If the LLM call fails, fall through with the regex-only result.
-      // Fail-open here so the fast path still works.
+      // Intentionally fail-open: if the LLM provider is unavailable or
+      // misconfigured, the fast regex/heuristic path still protects the
+      // input. Callers should monitor their provider separately.
     }
   }
 
