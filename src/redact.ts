@@ -22,6 +22,31 @@ export const DEFAULT_REDACTION_PATTERNS = [
   { type: 'phone_number', pattern: /\b(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g, replacement: '[PHONE]' },
   // Street Addresses (Common US/UK formats)
   { type: 'street_address', pattern: /\b\d{1,5}\s(?:[A-Z]{1}[a-z]+(?:\s[A-Z]{1}[a-z]+)*)\s(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Way|Court|Ct)\b/g, replacement: '[ADDRESS]' },
+
+  // ---------------------------------------------------------------------------
+  // Blockchain / Crypto-specific patterns
+  // ---------------------------------------------------------------------------
+
+  // Ethereum / EVM private key (64 hex chars, optionally 0x-prefixed)
+  { type: 'private_key', pattern: /\b(?:0x)?[0-9a-fA-F]{64}\b/g, replacement: '[PRIVATE_KEY]' },
+
+  // BIP-39 Mnemonic Seed Phrase (12 or 24 lowercase words)
+  // Matches common seed phrase patterns: 12 or 24 space-separated lowercase words
+  { type: 'mnemonic_seed', pattern: /\b(?:[a-z]{3,8}\s){11}[a-z]{3,8}\b/g, replacement: '[MNEMONIC_12]' },
+  { type: 'mnemonic_seed', pattern: /\b(?:[a-z]{3,8}\s){23}[a-z]{3,8}\b/g, replacement: '[MNEMONIC_24]' },
+
+  // Solana private key (base58, 87-88 chars)
+  { type: 'solana_private_key', pattern: /\b[1-9A-HJ-NP-Za-km-z]{87,88}\b/g, replacement: '[SOLANA_PRIVATE_KEY]' },
+
+  // Bitcoin WIF private key (starts with 5, K, or L; base58check)
+  { type: 'btc_wif_key', pattern: /\b[5KL][1-9A-HJ-NP-Za-km-z]{50,51}\b/g, replacement: '[BTC_PRIVATE_KEY]' },
+
+  // Ethereum keystore JSON (detect the cipher/ciphertext structure)
+  { type: 'keystore_json', pattern: /"ciphertext"\s*:\s*"[0-9a-fA-F]{64,}"/g, replacement: '"ciphertext": "[REDACTED_KEYSTORE]"' },
+
+  // HD derivation path (e.g. m/44'/60'/0'/0/0) — not a secret itself but
+  // contextually sensitive when paired with a key or mnemonic
+  { type: 'hd_path', pattern: /\bm\/\d+'?\/\d+'?\/\d+'?(?:\/\d+'?){0,2}\b/g, replacement: '[HD_PATH]' },
 ];
 
 export function redact(input: string, policy: Policy): RedactResult {

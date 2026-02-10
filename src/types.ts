@@ -1,6 +1,91 @@
 import { z } from 'zod';
 
 // ---------------------------------------------------------------------------
+// Provider types (used by the LLM provider layer in ./providers/)
+// ---------------------------------------------------------------------------
+
+/**
+ * A single part of a multimodal message (text or image).
+ */
+export type MultimodalContentPart =
+  | { type: 'text'; text: string }
+  | { type: 'image_url'; image_url: { url: string } };
+
+/**
+ * A chat message in the unified Agntor format.
+ */
+export interface ChatMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string | MultimodalContentPart[];
+}
+
+/**
+ * Unified response shape returned by every LLM provider adapter.
+ */
+export interface AnalysisResponse {
+  id: string;
+  usage: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
+  choices: Array<{
+    index: number;
+    message: {
+      role: string;
+      content: string;
+    };
+    finish_reason: string;
+  }>;
+}
+
+/**
+ * Result of parsing a "provider/model" string.
+ */
+export interface ParsedModel {
+  provider: string;
+  model: string;
+}
+
+// ---------------------------------------------------------------------------
+// Settlement Guard types (x402 scam detection)
+// ---------------------------------------------------------------------------
+
+/**
+ * Metadata describing a payment request received during an x402 flow.
+ */
+export interface TransactionMeta {
+  /** Amount in human-readable units (e.g. "50 USDC") */
+  amount: string;
+  /** Token / currency symbol */
+  currency: string;
+  /** Recipient contract or wallet address */
+  recipientAddress: string;
+  /** Human-readable description of the service being paid for */
+  serviceDescription: string;
+  /** Reputation score of the counterparty (0–1) */
+  reputationScore?: number;
+  /** On-chain ID of the chain (e.g. 1, 137, 8453) */
+  chainId?: number;
+  /** Any extra context the caller wants the LLM to consider */
+  additionalContext?: string;
+}
+
+/**
+ * Result of the settlement guard analysis.
+ */
+export interface SettlementGuardResult {
+  /** Overall risk classification */
+  classification: 'pass' | 'block';
+  /** LLM reasoning or rule explanation */
+  reasoning: string;
+  /** Numeric risk score 0–1 (0 = safe, 1 = certain scam) */
+  riskScore: number;
+  /** Individual risk signals that contributed to the decision */
+  riskFactors: string[];
+}
+
+// ---------------------------------------------------------------------------
 // Agntor SDK Configuration
 // ---------------------------------------------------------------------------
 

@@ -7,7 +7,23 @@ export { TicketIssuer } from './issuer.js';
 // Protection utilities
 export { guard, DEFAULT_INJECTION_PATTERNS } from './guard.js';
 export { redact, DEFAULT_REDACTION_PATTERNS } from './redact.js';
-export { guardTool } from './tool-guard.js';
+export { guardTool, wrapAgentTool } from './tool-guard.js';
+
+// Settlement guard (x402 scam detection)
+export { settlementGuard } from './settlement-guard.js';
+
+// Battery-included guard providers
+export { createOpenAIGuardProvider } from './providers/guard-openai.js';
+export { createAnthropicGuardProvider } from './providers/guard-anthropic.js';
+
+// Provider infrastructure
+export {
+  callProvider,
+  parseModel,
+  getProvider,
+  providers,
+  DEFAULT_GUARD_MODEL,
+} from './providers/index.js';
 
 // Network security (SSRF guard)
 export { validateUrl, isUrlString } from './utils/network.js';
@@ -55,7 +71,29 @@ export type {
   ReputationHistoryEntry,
   AgntorEvent,
   AgntorEventCallback,
+  ChatMessage,
+  AnalysisResponse,
+  MultimodalContentPart,
+  ParsedModel,
+  TransactionMeta,
+  SettlementGuardResult,
 } from './types.js';
+
+export type {
+  WrapAgentToolOptions,
+} from './tool-guard.js';
+
+export type {
+  SettlementGuardOptions,
+} from './settlement-guard.js';
+
+export type {
+  OpenAIGuardProviderOptions,
+} from './providers/guard-openai.js';
+
+export type {
+  AnthropicGuardProviderOptions,
+} from './providers/guard-anthropic.js';
 
 export type {
   GuardResponse,
@@ -67,3 +105,13 @@ export type {
   SimulatorConfig,
   SimulationParams,
 } from './simulator.js';
+
+export type {
+  ProviderConfig,
+  ResponseFormat,
+  JsonSchema,
+} from './providers/index.js';
+
+export type {
+  FallbackOptions,
+} from './providers/index.js';
