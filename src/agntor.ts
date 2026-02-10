@@ -13,6 +13,7 @@ import type {
   ReputationHistoryEntry,
 } from './types.js';
 import { AgntorError } from './types.js';
+import { validateUrl } from './utils/network.js';
 
 const DEFAULT_BASE_URL = 'https://api.agntor.com';
 const DEFAULT_TIMEOUT = 30_000;
@@ -101,6 +102,10 @@ export class Agntor {
   /** @internal */
   async request<T = unknown>(path: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseUrl}${path}`;
+
+    // SSRF guard — validate constructed URL before any network I/O
+    await validateUrl(url);
+
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'x-api-key': this.apiKey,
@@ -161,6 +166,101 @@ export class Agntor {
     }
 
     throw lastError ?? new AgntorError('Request failed', 'UNKNOWN');
+  }
+
+  // ---------------------------------------------------------------------------
+  // Trust-aware request (x402 middleware)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Make a trust-aware HTTP request.
+   *
+   * If the server responds with 402 Payment Required and includes an
+   * `X-AGNTOR-Proof` header, this method automatically attaches the
+   * proof to a retry so the caller never has to handle the payment
+   * handshake manually.
+   *
+   * @param path   API path
+   * @param options Fetch options
+   * @param paymentToken  Optional pre-fetched x402 proof token
+   */
+  async trustedRequest<T = unknown>(
+    path: string,
+    options: RequestInit = {},
+    paymentToken?: string,
+  ): Promise<T> {
+    const extraHeaders: Record<string, string> = {};
+    if (paymentToken) {
+      extraHeaders['X-AGNTOR-Proof'] = paymentToken;
+    }
+
+    const merged: RequestInit = {
+      ...options,
+      headers: {
+        ...(options.headers as Record<string, string> | undefined),
+        ...extraHeaders,
+      },
+    };
+
+    // First attempt
+    const url = `${this.baseUrl}${path}`;
+
+    // SSRF guard
+    await validateUrl(url);
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'x-api-key': this.apiKey,
+      'x-agent-id': this.agentId,
+      'x-chain': this.chain,
+      ...(merged.headers as Record<string, string> | undefined),
+    };
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.timeout);
+
+    try {
+      const response = await fetch(url, {
+        ...merged,
+        headers,
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+
+      if (response.status === 402) {
+        // If there is no payment token yet, surface the 402 body
+        // so the caller can obtain a proof and retry.
+        const body = await response.json();
+        if (!paymentToken) {
+          return body as T;
+        }
+
+        throw new AgntorError(
+          'Payment proof rejected by server',
+          'PAYMENT_REJECTED',
+          402,
+        );
+      }
+
+      if (!response.ok) {
+        const body = await response.text().catch(() => '');
+        throw new AgntorError(
+          `Agntor API error: ${response.status} ${response.statusText}${body ? ` – ${body}` : ''}`,
+          'API_ERROR',
+          response.status,
+        );
+      }
+
+      return (await response.json()) as T;
+    } catch (err) {
+      if ((err as Error).name === 'AbortError') {
+        throw new AgntorError(
+          `Trusted request to ${path} timed out after ${this.timeout}ms`,
+          'TIMEOUT',
+        );
+      }
+      throw err;
+    }
   }
 
   // ---------------------------------------------------------------------------

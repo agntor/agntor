@@ -1,4 +1,5 @@
-import type { GuardResult, Policy } from './types.js';
+import type { GuardResult, GuardOptions, Policy } from './types.js';
+import { GuardResponseSchema } from './schemas.js';
 
 /**
  * Default injection patterns to catch common prompt injection attacks
@@ -17,7 +18,11 @@ export const DEFAULT_INJECTION_PATTERNS = [
   /\boutput\s+the\s+full\s+prompt\b/i,
 ];
 
-export async function guard(input: string, policy: Policy): Promise<GuardResult> {
+export async function guard(
+  input: string,
+  policy: Policy,
+  options?: GuardOptions,
+): Promise<GuardResult> {
   const violations: string[] = [];
   
   // 1. Pattern Matching (Fast)
@@ -36,6 +41,24 @@ export async function guard(input: string, policy: Policy): Promise<GuardResult>
     violations.push('potential-obfuscation');
   }
 
+  // 3. Deep Scan — LLM-based semantic guard (optional)
+  let reasoning: string | undefined;
+
+  if (options?.deepScan && options.provider) {
+    try {
+      const llmResult = await options.provider.classify(input);
+      const parsed = GuardResponseSchema.parse(llmResult);
+      reasoning = parsed.reasoning;
+
+      if (parsed.classification === 'block') {
+        violations.push('llm-flagged-injection');
+      }
+    } catch {
+      // If the LLM call fails, fall through with the regex-only result.
+      // Fail-open here so the fast path still works.
+    }
+  }
+
   const classification = violations.length ? 'block' : 'pass';
 
   const cwe_codes = violations
@@ -49,7 +72,8 @@ export async function guard(input: string, policy: Policy): Promise<GuardResult>
   return { 
     classification, 
     violation_types: [...new Set(violations)], 
-    cwe_codes: [...new Set(cwe_codes)], 
-    usage 
+    cwe_codes: [...new Set(cwe_codes)],
+    reasoning,
+    usage,
   };
 }

@@ -98,10 +98,41 @@ export interface Policy {
   toolValidator?: (tool: string, args?: unknown) => boolean | string;
 }
 
+/**
+ * Provider used for LLM-based "deep scan" guarding.
+ *
+ * Implement this interface to plug in any model (GPT-4o, Claude, etc.)
+ * as a semantic guard for prompt-injection detection.
+ */
+export interface GuardProvider {
+  /**
+   * Classify the given input as safe or unsafe.
+   *
+   * The implementation must return valid JSON matching `GuardResponseSchema`
+   * from `schemas.ts` (i.e. `{ classification, reasoning }`).
+   */
+  classify(input: string): Promise<{ classification: 'pass' | 'block'; reasoning: string }>;
+}
+
+export interface GuardOptions {
+  /**
+   * When `true`, falls back to an LLM-based semantic scan
+   * after the fast regex pass, using the provided `provider`.
+   */
+  deepScan?: boolean;
+
+  /**
+   * LLM provider used for deep-scan mode.
+   * Required when `deepScan` is `true`.
+   */
+  provider?: GuardProvider;
+}
+
 export interface GuardResult {
   classification: 'pass' | 'block';
   violation_types: string[];
   cwe_codes: string[];
+  reasoning?: string;
   usage?: { promptTokens: number; completionTokens: number; totalTokens: number };
 }
 
