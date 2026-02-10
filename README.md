@@ -2,6 +2,8 @@
 
 Trust and payment rail for AI agents — identity, verification, escrow, settlement, and reputation.
 
+> **ESM-only.** This package ships as native ES modules and requires Node.js >= 18.
+
 ## Installation
 
 ```bash
@@ -100,16 +102,208 @@ agntor.on("verification_changed", (data) => console.log("Verification:", data));
 
 ## Configuration
 
-| Option | Default | Description |
-|------------|---------------------------|--------------------------------------|
-| `apiKey` | *required* | Your Agntor API key |
-| `agentId` | *required* | Your canonical agent URI |
-| `chain` | *required* | Target chain (e.g. `"base"`) |
-| `baseUrl` | `https://api.agntor.com` | API base URL (override for staging) |
-| `timeout` | `30000` | Request timeout in ms |
-| `maxRetries`| `3` | Max retries on transient errors |
+| Option       | Default                   | Description                          |
+|--------------|---------------------------|--------------------------------------|
+| `apiKey`     | *required*                | Your Agntor API key                  |
+| `agentId`    | *required*                | Your canonical agent URI             |
+| `chain`      | *required*                | Target chain (e.g. `"base"`)         |
+| `baseUrl`    | `https://api.agntor.com`  | API base URL (override for staging)  |
+| `timeout`    | `30000`                   | Request timeout in ms                |
+| `maxRetries` | `3`                       | Max retries on transient errors      |
 
-## Ticket System (Advanced)
+## Protection Utilities
+
+### Prompt-Injection Guard
+
+Detects prompt injection attacks with a three-layer approach: fast regex patterns, heuristic analysis, and optional LLM-based deep scan.
+
+```typescript
+import { guard } from "@agntor/sdk";
+
+// Fast regex + heuristic scan (no API key needed)
+const result = await guard("user input", {
+  injectionPatterns: [/ignore previous instructions/i],
+});
+
+if (result.classification === "block") {
+  console.log("Blocked:", result.violation_types);
+}
+```
+
+#### Deep Scan with Guard Providers
+
+For semantic analysis, use a battery-included guard provider — just pass an API key:
+
+```typescript
+import { guard, createOpenAIGuardProvider } from "@agntor/sdk";
+
+const provider = createOpenAIGuardProvider({ apiKey: "sk-..." });
+// or: createAnthropicGuardProvider({ apiKey: "sk-ant-..." })
+
+const result = await guard(userInput, policy, {
+  deepScan: true,
+  provider,
+});
+```
+
+Available providers:
+
+| Factory                          | Env Variable         | Default Model              |
+|----------------------------------|----------------------|----------------------------|
+| `createOpenAIGuardProvider()`    | `OPENAI_API_KEY`     | `gpt-4o-mini`              |
+| `createAnthropicGuardProvider()` | `ANTHROPIC_API_KEY`  | `claude-3-5-haiku-latest`  |
+
+### PII & Secret Redaction
+
+Strips sensitive data from text before it leaves your system. Includes blockchain-specific patterns out of the box.
+
+```typescript
+import { redact } from "@agntor/sdk";
+
+const { redacted, findings } = redact(
+  "My key is 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
+  {},
+);
+// redacted: "My key is [PRIVATE_KEY]"
+```
+
+**Default patterns include:**
+
+| Category             | Examples                                          |
+|----------------------|---------------------------------------------------|
+| PII                  | Email, phone, SSN, credit card, street address    |
+| Cloud secrets        | AWS access keys, Bearer tokens, API key/secrets   |
+| Blockchain keys      | EVM private keys, Solana keys, BTC WIF keys       |
+| Wallet recovery      | BIP-39 mnemonic seeds (12- and 24-word)           |
+| Key storage          | Keystore JSON ciphertext, HD derivation paths     |
+
+### Tool Guard
+
+Policy-based allow/blocklist for tool invocations:
+
+```typescript
+import { guardTool } from "@agntor/sdk";
+
+const check = guardTool("shell.exec", undefined, {
+  toolBlocklist: ["shell.exec"],
+});
+// check.allowed === false
+```
+
+### wrapAgentTool
+
+High-level wrapper that automatically applies **redact + guard + SSRF check** to any tool function:
+
+```typescript
+import { wrapAgentTool } from "@agntor/sdk";
+
+const safeFetch = wrapAgentTool(myFetchTool, {
+  policy: { toolBlocklist: ["dangerous_tool"] },
+});
+
+// Inputs are redacted, guard-checked, and SSRF-validated before execution
+const result = await safeFetch("https://api.example.com/data");
+```
+
+## Settlement Guard (x402)
+
+Evaluates whether a payment request is legitimate or likely a scam. Combines fast heuristic checks with an optional LLM deep scan.
+
+```typescript
+import { settlementGuard, createOpenAIGuardProvider } from "@agntor/sdk";
+
+const result = await settlementGuard(
+  {
+    amount: "50",
+    currency: "USDC",
+    recipientAddress: "0xabc...",
+    serviceDescription: "Data Analysis",
+    reputationScore: 0.4,
+  },
+  {
+    deepScan: true,
+    provider: createOpenAIGuardProvider({ apiKey: "sk-..." }),
+  },
+);
+
+if (result.classification === "block") {
+  console.warn(`High-risk (${result.riskScore}):`, result.reasoning);
+  console.warn("Risk factors:", result.riskFactors);
+}
+```
+
+**Heuristic checks (always run):**
+- Known-bad / sanctioned addresses
+- Low counterparty reputation score
+- High-value transaction threshold
+- Vague or missing service descriptions
+- Zero-address detection
+
+## Transaction Simulator
+
+Dry-run an on-chain transaction via `eth_call` before signing:
+
+```typescript
+import { TransactionSimulator } from "@agntor/sdk";
+
+const sim = new TransactionSimulator({
+  rpcUrl: "https://mainnet.base.org",
+  maxGas: 500_000,
+});
+
+const result = await sim.simulate({
+  from: "0xSender...",
+  to: "0xContract...",
+  data: "0xCalldata...",
+  value: "0x0",
+});
+
+if (!result.safe) {
+  console.warn("Simulation failed:", result.error ?? result.warnings);
+}
+```
+
+## SSRF Protection
+
+Validates URLs against private/internal IP ranges with DNS resolution:
+
+```typescript
+import { validateUrl } from "@agntor/sdk";
+
+try {
+  await validateUrl("https://api.example.com/resource");
+  // Safe to fetch
+} catch (err) {
+  // URL targets localhost, private IP, or uses blocked protocol
+}
+```
+
+## AP2 Protocol Helpers
+
+Generate and parse [AP2 (Agentic Commerce)](https://github.com/anthropics/anthropic-cookbook) headers:
+
+```typescript
+import { getAP2Headers, parseAP2Headers } from "@agntor/sdk";
+
+const headers = getAP2Headers({
+  agentId: "agent://my-agent",
+  roles: ["buyer"],
+  supportedMethods: ["x402"],
+});
+```
+
+## Structured Output Schemas
+
+Zod schemas for validating LLM responses:
+
+```typescript
+import { parseStructuredOutput, GuardResponseSchema } from "@agntor/sdk";
+
+const parsed = parseStructuredOutput(llmRawOutput, GuardResponseSchema);
+// { classification: "pass" | "block", reasoning: string }
+```
+
+## Ticket System
 
 For low-level audit ticket operations:
 
@@ -134,22 +328,6 @@ const ticket = issuer.generateTicket({
 });
 
 const result = await issuer.validateTicket(ticket);
-```
-
-## Protection Utilities
-
-```typescript
-import { guard, redact, guardTool } from "@agntor/sdk";
-
-const guardResult = await guard("user input", {
-  injectionPatterns: [/ignore previous instructions/i],
-});
-
-const redaction = redact("ssn 123-45-6789", {});
-
-const toolCheck = guardTool("shell.exec", undefined, {
-  toolBlocklist: ["shell.exec"],
-});
 ```
 
 ## License

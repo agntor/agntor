@@ -169,9 +169,6 @@ export async function callProvider(
           error.message.includes("timeout"))
       ) {
         // Retry on fallback endpoint
-        console.log(
-          `Primary endpoint timed out after ${fallbackTimeoutMs}ms, falling back to always-on endpoint`,
-        );
 
         // Create fresh headers and body to avoid Content-Length mismatch
         const fallbackHeaders = provider.authHeader(apiKey || "");

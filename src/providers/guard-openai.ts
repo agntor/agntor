@@ -37,8 +37,7 @@ Be strict. When in doubt, classify as "block".`;
  *
  * @example
  * ```ts
- * import { guard } from '@agntor/sdk';
- * import { createOpenAIGuardProvider } from '@agntor/sdk/providers/guard-openai';
+ * import { guard, createOpenAIGuardProvider } from '@agntor/sdk';
  *
  * const provider = createOpenAIGuardProvider({ apiKey: 'sk-...' });
  * const result = await guard(userInput, policy, { deepScan: true, provider });

@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Trust and payment rail for AI agents — identity, verification, escrow, settlement, and reputation.",
   "type": "module",
+  "sideEffects": false,
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -10,6 +11,9 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     }
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "files": [
     "dist",
@@ -28,7 +32,11 @@
     "identity",
     "ai-agents",
     "x402",
-    "jwt"
+    "jwt",
+    "guard",
+    "redact",
+    "blockchain",
+    "ssrf"
   ],
   "author": "Agntor Team",
   "license": "MIT",

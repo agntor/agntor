@@ -37,8 +37,7 @@ Be strict. When in doubt, classify as "block".`;
  *
  * @example
  * ```ts
- * import { guard } from '@agntor/sdk';
- * import { createAnthropicGuardProvider } from '@agntor/sdk/providers/guard-anthropic';
+ * import { guard, createAnthropicGuardProvider } from '@agntor/sdk';
  *
  * const provider = createAnthropicGuardProvider({ apiKey: 'sk-ant-...' });
  * const result = await guard(userInput, policy, { deepScan: true, provider });

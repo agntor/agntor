@@ -147,8 +147,7 @@ export interface SettlementGuardOptions {
  *
  * @example
  * ```ts
- * import { settlementGuard } from '@agntor/sdk';
- * import { createOpenAIGuardProvider } from '@agntor/sdk/providers/guard-openai';
+ * import { settlementGuard, createOpenAIGuardProvider } from '@agntor/sdk';
  *
  * const result = await settlementGuard(
  *   {
