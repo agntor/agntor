@@ -104,8 +104,7 @@ export interface ProviderConfig {
     | OpenAIResponsesRequestBody
     | AnthropicRequestBody
     | GoogleRequestBody
-    | BedrockRequestBody
-    | SuperagentRequestBody;
+    | BedrockRequestBody;
   /** Transform provider response to unified AnalysisResponse */
   transformResponse: (response: unknown) => AnalysisResponse;
 }
@@ -280,17 +279,4 @@ export interface BedrockResponse {
   };
 }
 
-/**
- * Superagent API request body (Ollama-style)
- */
-export interface SuperagentRequestBody {
-  model: string;
-  messages: Array<{
-    role: string;
-    content: string;
-  }>;
-  stream: boolean;
-  temperature?: number;
-  top_p?: number;
-  top_k?: number;
-}
+

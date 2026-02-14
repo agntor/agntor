@@ -211,6 +211,13 @@ export interface GuardOptions {
    * Required when `deepScan` is `true`.
    */
   provider?: GuardProvider;
+
+  /**
+   * Optional error callback invoked when the LLM guard provider fails.
+   * By default, guard failures are fail-open (silently ignored).
+   * Use this to log or monitor provider issues.
+   */
+  onError?: (error: Error) => void;
 }
 
 export interface GuardResult {
@@ -219,6 +226,8 @@ export interface GuardResult {
   cwe_codes: string[];
   reasoning?: string;
   usage?: { promptTokens: number; completionTokens: number; totalTokens: number };
+  /** If the LLM guard provider failed, this contains the error message. */
+  providerError?: string;
 }
 
 export interface RedactResult {

@@ -55,7 +55,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "test": "node --test",
+    "test": "tsc && node --test tests/*.test.js",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run build"
   },

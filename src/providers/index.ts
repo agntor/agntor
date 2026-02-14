@@ -8,30 +8,24 @@ import { vercelProvider } from "./vercel.js";
 import { groqProvider } from "./groq.js";
 import { fireworksProvider } from "./fireworks.js";
 import { openrouterProvider } from "./openrouter.js";
-import {
-  superagentProvider,
-  getFallbackUrl,
-  DEFAULT_FALLBACK_TIMEOUT_MS,
-  DEFAULT_FALLBACK_URL,
-} from "./superagent.js";
 import { openaiCompatibleProvider } from "./openai-compatible.js";
 
 /**
- * Options for fallback behavior on cold starts
+ * Options for fallback behavior on provider failures
  */
 export interface FallbackOptions {
-  /** Enable fallback to always-on endpoint on timeout. Default: true for superagent provider */
+  /** Enable fallback to an alternative endpoint on timeout */
   enableFallback?: boolean;
   /** Timeout in milliseconds before falling back. Default: 5000 */
   fallbackTimeoutMs?: number;
-  /** Custom fallback URL. If not provided, uses env var or default */
+  /** Custom fallback URL */
   fallbackUrl?: string;
 }
 
 /**
  * Default model for guard() when no model is specified
  */
-export const DEFAULT_GUARD_MODEL = "superagent/guard-1.7b";
+export const DEFAULT_GUARD_MODEL = "openai/gpt-4o-mini";
 
 /**
  * Registry of supported providers
@@ -46,7 +40,6 @@ export const providers: Record<string, ProviderConfig> = {
   groq: groqProvider,
   fireworks: fireworksProvider,
   openrouter: openrouterProvider,
-  superagent: superagentProvider,
 };
 
 /**
@@ -91,6 +84,11 @@ export function getProvider(providerName: string): ProviderConfig {
 }
 
 /**
+ * Default fallback timeout in milliseconds
+ */
+const DEFAULT_FALLBACK_TIMEOUT_MS = 5_000;
+
+/**
  * Call an LLM provider with the given messages
  */
 export async function callProvider(
@@ -102,7 +100,7 @@ export async function callProvider(
   const { provider: providerName, model } = parseModel(modelString);
   const provider = getProvider(providerName);
 
-  // Allow empty API key for providers that don't require authentication (e.g., superagent)
+  // Allow empty API key for providers that don't require authentication
   const apiKey = provider.envVar ? process.env[provider.envVar] : "";
   if (provider.envVar && !apiKey) {
     throw new Error(
@@ -121,18 +119,14 @@ export async function callProvider(
     ? provider.buildUrl(provider.baseUrl, model)
     : provider.baseUrl;
 
-  // Determine if fallback is enabled (default: true for superagent provider)
-  const isSuperagent = providerName === "superagent";
-  const enableFallback = fallbackOptions?.enableFallback ?? isSuperagent;
+  // Determine if fallback is enabled
+  const enableFallback = fallbackOptions?.enableFallback ?? false;
   const fallbackTimeoutMs =
     fallbackOptions?.fallbackTimeoutMs ?? DEFAULT_FALLBACK_TIMEOUT_MS;
-  const fallbackUrl = getFallbackUrl(fallbackOptions?.fallbackUrl);
+  const fallbackUrl = fallbackOptions?.fallbackUrl;
 
   // Check if fallback is enabled and URL is available
-  const fallbackAvailable =
-    enableFallback &&
-    fallbackUrl &&
-    fallbackUrl !== "FALLBACK_ENDPOINT_PLACEHOLDER";
+  const fallbackAvailable = enableFallback && fallbackUrl;
 
   if (fallbackAvailable) {
     // Use AbortController for timeout-based fallback
@@ -169,8 +163,6 @@ export async function callProvider(
           error.message.includes("timeout"))
       ) {
         // Retry on fallback endpoint
-
-        // Create fresh headers and body to avoid Content-Length mismatch
         const fallbackHeaders = provider.authHeader(apiKey || "");
         const fallbackBody = JSON.stringify(requestBody);
 

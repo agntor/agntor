@@ -7,7 +7,7 @@ import { validateUrl } from './utils/network.js';
 // Existing guardTool — policy-based tool allow/blocklist
 // ---------------------------------------------------------------------------
 
-export function guardTool(tool: string, args?: any, policy?: Policy): ToolGuardResult {
+export function guardTool(tool: string, args?: unknown, policy?: Policy): ToolGuardResult {
   const violations: string[] = [];
 
   if (!policy) {
@@ -49,6 +49,27 @@ export function guardTool(tool: string, args?: any, policy?: Policy): ToolGuardR
   }
 
   return { allowed: true };
+}
+
+// ---------------------------------------------------------------------------
+// Deep redaction helper — recursively redacts string values in objects/arrays
+// ---------------------------------------------------------------------------
+
+function deepRedact<T>(value: T, policy: Policy): T {
+  if (typeof value === 'string') {
+    return redact(value, policy).redacted as T;
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => deepRedact(item, policy)) as T;
+  }
+  if (value !== null && typeof value === 'object') {
+    const result: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value)) {
+      result[k] = deepRedact(v, policy);
+    }
+    return result as T;
+  }
+  return value;
 }
 
 // ---------------------------------------------------------------------------
@@ -121,10 +142,13 @@ export function wrapAgentTool<T extends (...args: any[]) => any>(
       );
     }
 
-    // 2. Redact sensitive data from string arguments
+    // 2. Redact sensitive data from arguments (strings and nested object values)
     const safeArgs = args.map((arg) => {
       if (typeof arg === 'string') {
         return redact(arg, policy).redacted;
+      }
+      if (arg !== null && typeof arg === 'object') {
+        return deepRedact(arg, policy);
       }
       return arg;
     }) as Parameters<T>;

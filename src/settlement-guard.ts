@@ -136,6 +136,13 @@ export interface SettlementGuardOptions {
    * injection guard). Required when `deepScan` is `true`.
    */
   provider?: GuardProvider;
+
+  /**
+   * Optional error callback invoked when the LLM provider fails.
+   * By default, provider failures are fail-open (silently ignored).
+   * Use this to log or monitor provider issues.
+   */
+  onError?: (error: Error) => void;
 }
 
 /**
@@ -205,8 +212,10 @@ export async function settlementGuard(
         riskScore: combined,
         riskFactors,
       };
-    } catch {
+    } catch (err) {
       // Fail-open for LLM errors — heuristics still protect the user.
+      const error = err instanceof Error ? err : new Error(String(err));
+      options.onError?.(error);
     }
   }
 

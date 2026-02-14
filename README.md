@@ -280,16 +280,12 @@ try {
 
 ## AP2 Protocol Helpers
 
-Generate and parse [AP2 (Agentic Commerce)](https://github.com/anthropics/anthropic-cookbook) headers:
+Generate and parse [AP2 (Agentic Commerce)](https://github.com/google-agentic-commerce/ap2/tree/v0.1) headers:
 
 ```typescript
 import { getAP2Headers, parseAP2Headers } from "@agntor/sdk";
 
-const headers = getAP2Headers({
-  agentId: "agent://my-agent",
-  roles: ["buyer"],
-  supportedMethods: ["x402"],
-});
+const headers = getAP2Headers("agent://my-agent");
 ```
 
 ## Structured Output Schemas
