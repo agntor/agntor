@@ -42,13 +42,13 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/agntor/agntor.git",
+    "url": "https://github.com/Garinmckayl/agntor.git",
     "directory": "packages/sdk"
   },
   "bugs": {
-    "url": "https://github.com/agntor/agntor/issues"
+    "url": "https://github.com/Garinmckayl/agntor/issues"
   },
-  "homepage": "https://agntor.com",
+  "homepage": "https://github.com/Garinmckayl/agntor/tree/main/packages/sdk#readme",
   "engines": {
     "node": ">=18.0.0"
   },
