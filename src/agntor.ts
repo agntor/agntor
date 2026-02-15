@@ -15,7 +15,7 @@ import type {
 import { AgntorError } from './types.js';
 import { validateUrl } from './utils/network.js';
 
-const DEFAULT_BASE_URL = 'https://api.agntor.com';
+const DEFAULT_BASE_URL = 'https://app.agntor.com';
 const DEFAULT_TIMEOUT = 30_000;
 const DEFAULT_MAX_RETRIES = 3;
 
