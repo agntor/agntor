@@ -1,5 +1,8 @@
 import { lookup } from 'node:dns/promises';
-import * as ipaddr from 'ipaddr.js';
+import ipaddrModule from 'ipaddr.js';
+
+// Handle CJS default export in ESM context
+const ipaddr = (ipaddrModule as any).default ?? ipaddrModule;
 
 const MAX_URL_LENGTH = 2048;
 
@@ -12,22 +15,20 @@ function isPrivateIpAddress(ip: string): boolean {
     const addr = ipaddr.process(ip);
 
     if (addr.kind() === 'ipv4') {
-      const ipv4 = addr as ipaddr.IPv4;
+      const range = addr.range();
       return (
-        ipv4.range() === 'private' ||
-        ipv4.range() === 'loopback' ||
-        ipv4.range() === 'linkLocal' ||
-        ipv4.range() === 'multicast'
+        range === 'private' ||
+        range === 'loopback' ||
+        range === 'linkLocal' ||
+        range === 'multicast'
       );
     } else if (addr.kind() === 'ipv6') {
-      const ipv6 = addr as ipaddr.IPv6;
-
-      if (ipv6.isIPv4MappedAddress()) {
-        const ipv4Mapped = ipv6.toIPv4Address();
+      if (addr.isIPv4MappedAddress()) {
+        const ipv4Mapped = addr.toIPv4Address();
         return isPrivateIpAddress(ipv4Mapped.toString());
       }
 
-      const range = ipv6.range();
+      const range = addr.range();
       return (
         range === 'uniqueLocal' ||
         range === 'linkLocal' ||
