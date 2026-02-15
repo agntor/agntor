@@ -1,6 +1,6 @@
 {
   "name": "@agntor/sdk",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Trust and payment rail for AI agents — identity, verification, escrow, settlement, and reputation.",
   "type": "module",
   "sideEffects": false,
