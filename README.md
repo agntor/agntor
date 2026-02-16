@@ -107,7 +107,7 @@ agntor.on("verification_changed", (data) => console.log("Verification:", data));
 | `apiKey`     | *required*                | Your Agntor API key                  |
 | `agentId`    | *required*                | Your canonical agent URI             |
 | `chain`      | *required*                | Target chain (e.g. `"base"`)         |
-| `baseUrl`    | `https://api.agntor.com`  | API base URL (override for staging)  |
+| `baseUrl`    | `https://app.agntor.com`  | API base URL (override for staging)  |
 | `timeout`    | `30000`                   | Request timeout in ms                |
 | `maxRetries` | `3`                       | Max retries on transient errors      |
 
