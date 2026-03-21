@@ -326,6 +326,13 @@ const ticket = issuer.generateTicket({
 const result = await issuer.validateTicket(ticket);
 ```
 
+## Status Network
+
+Agntor is deployed on [Status Network Sepolia](https://sepoliascan.status.network) (Chain ID: 1660990954) with fully gasless transactions (`gasPrice=0`).
+
+- Contract: `0x5f2318904BB5475f7f3653206e08D6884227e061`
+- Deploy tx: [`0xb1d9d...`](https://sepoliascan.status.network/tx/0xb1d9d0f5a62a60e7fe24ebe8bb560fbe5abbff83a9cddaf5f6a38cfb974ef02e)
+
 ## License
 
 MIT — see [LICENSE](./LICENSE)
